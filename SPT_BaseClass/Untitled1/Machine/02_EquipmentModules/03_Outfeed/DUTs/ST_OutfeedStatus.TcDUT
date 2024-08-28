@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_OutfeedStatus" Id="{c820fc5a-8087-492e-8950-f2aaba5924cc}">
+    <Declaration><![CDATA[TYPE ST_OutfeedStatus :
+	STRUCT
+		ProductAtReady	: BOOL;
+		ProductRemoved	: BOOL;
+		ConveyorRunning : BOOL;
+	END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,380 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="Machine" Id="{ae42b527-5b2f-4043-a353-0709b04a7de6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Machine EXTENDS CommonModule IMPLEMENTS I_MachineModule
+VAR
+	//EMs
+	Infeed	: EM_InfeedModule  := (Name := 'Infeed');
+	Process : EM_ProcessModule := (Name := 'Process');
+	Outfeed : EM_OutfeedModule := (Name := 'Outfeed');
+
+	//Components
+	StackLight		 : FB_Component_StackLight		 := (Name := 'StackLight');
+	TwinSAFE_Monitor : FB_Component_TwinSAFE_Monitor := (Name := 'TwinSAFE_Monitor');
+
+	//
+	fbTON_InfeedRun	   : TON;
+	fbTON_ProcessDelay : TON;
+	fbTON_OutfeedRun   : TON;
+
+	//
+	_CmdMachine : ST_MachineCommand;
+	_StsMachine : ST_MachineStatus;
+	_RcpMachine : ST_MachineRecipe;
+	_CfgMachine : ST_MachineConfig;
+
+	//Visitor
+	CollectOEE_MM : FB_CollectOEE;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Folder Name="Acting" Id="{b867810b-83a4-42b8-83fc-d58096ba85df}" />
+    <Folder Name="I_CyclicLogic" Id="{94db774b-03ec-4ba0-8e48-93f425ae10a5}" />
+    <Folder Name="I_MachineModule" Id="{c9bacf54-db1c-46d2-bfe4-07954a1811fd}" />
+    <Folder Name="Initialize" Id="{bd23bc5c-e138-449d-a854-95e1aa4c91d6}" />
+    <Folder Name="Waiting" Id="{e959f869-19cb-4c34-b909-40dd37320897}" />
+    <Property Name="CfgMachine" Id="{c2715ec5-865d-4fe1-867b-ae13d7acd5c4}" FolderPath="I_MachineModule\">
+      <Declaration><![CDATA[PROPERTY CfgMachine : REFERENCE TO ST_MachineConfig]]></Declaration>
+      <Get Name="Get" Id="{b93a81a6-d086-45f0-8cb5-2e639d745809}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CfgMachine REF= _CfgMachine;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="CmdMachine" Id="{d76c054f-aab2-41e6-a61c-f7b4825a5e84}" FolderPath="I_MachineModule\">
+      <Declaration><![CDATA[PROPERTY CmdMachine : REFERENCE TO ST_MachineCommand]]></Declaration>
+      <Get Name="Get" Id="{d8eed551-21f3-4a05-9b2e-18691d2183f7}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CmdMachine REF= _CmdMachine;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="CreateCustomModes" Id="{d9c82004-48cf-41ac-a536-9c891535f029}" FolderPath="Initialize\">
+      <Declaration><![CDATA[METHOD CreateCustomModes : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Production
+CustomModes(eMode						   := E_PMLCustomMode.Production,
+			sName						   := 'Production',
+			bDisableClearing			   := FALSE,
+			bDisableStarting			   := FALSE,
+			bDisableSuspended			   := FALSE,
+			bDisableStopping			   := FALSE,
+			bDisableAborting			   := FALSE,
+			bDisableHolding				   := FALSE,
+			bDisableHeld				   := FALSE,
+			bDisableUnholding			   := FALSE,
+			bDisableSuspending			   := FALSE,
+			bDisableUnsuspending		   := FALSE,
+			bDisableResetting			   := FALSE,
+			bDisableIdle				   := FALSE,
+			bDisableCompleting			   := FALSE,
+			bDisableComplete			   := FALSE,
+			bEnableUnitModeChangeStopped   := TRUE,
+			bEnableUnitModeChangeIdle	   := TRUE,
+			bEnableUnitModeChangeSuspended := TRUE,
+			bEnableUnitModeChangeExecute   := TRUE,
+			bEnableUnitModeChangeAborted   := TRUE,
+			bEnableUnitModeChangeHeld	   := TRUE,
+			bEnableUnitModeChangeComplete  := TRUE);
+
+//Home
+CustomModes(eMode						   := E_PMLCustomMode.Home,
+			sName						   := 'Home',
+			bDisableClearing			   := FALSE,
+			bDisableStarting			   := FALSE,
+			bDisableSuspended			   := FALSE,
+			bDisableStopping			   := FALSE,
+			bDisableAborting			   := FALSE,
+			bDisableHolding				   := FALSE,
+			bDisableHeld				   := FALSE,
+			bDisableUnholding			   := FALSE,
+			bDisableSuspending			   := FALSE,
+			bDisableUnsuspending		   := FALSE,
+			bDisableResetting			   := FALSE,
+			bDisableIdle				   := FALSE,
+			bDisableCompleting			   := FALSE,
+			bDisableComplete			   := FALSE,
+			bEnableUnitModeChangeStopped   := TRUE,
+			bEnableUnitModeChangeIdle	   := TRUE,
+			bEnableUnitModeChangeSuspended := TRUE,
+			bEnableUnitModeChangeExecute   := TRUE,
+			bEnableUnitModeChangeAborted   := TRUE,
+			bEnableUnitModeChangeHeld	   := TRUE,
+			bEnableUnitModeChangeComplete  := TRUE);
+
+//Pre-Positioning for resetting between products
+CustomModes(eMode						   := E_PMLCustomMode.PrePositioning,
+			sName						   := 'Pre-Positioning',
+			bDisableClearing			   := FALSE,
+			bDisableStarting			   := FALSE,
+			bDisableSuspended			   := FALSE,
+			bDisableStopping			   := FALSE,
+			bDisableAborting			   := FALSE,
+			bDisableHolding				   := FALSE,
+			bDisableHeld				   := FALSE,
+			bDisableUnholding			   := FALSE,
+			bDisableSuspending			   := FALSE,
+			bDisableUnsuspending		   := FALSE,
+			bDisableResetting			   := FALSE,
+			bDisableIdle				   := FALSE,
+			bDisableCompleting			   := FALSE,
+			bDisableComplete			   := FALSE,
+			bEnableUnitModeChangeStopped   := TRUE,
+			bEnableUnitModeChangeIdle	   := TRUE,
+			bEnableUnitModeChangeSuspended := TRUE,
+			bEnableUnitModeChangeExecute   := TRUE,
+			bEnableUnitModeChangeAborted   := TRUE,
+			bEnableUnitModeChangeHeld	   := TRUE,
+			bEnableUnitModeChangeComplete  := TRUE);
+
+//Pre-Production for Heaters
+CustomModes(eMode						   := E_PMLCustomMode.PreProduction,
+			sName						   := 'Pre-Production',
+			bDisableClearing			   := FALSE,
+			bDisableStarting			   := FALSE,
+			bDisableSuspended			   := FALSE,
+			bDisableStopping			   := FALSE,
+			bDisableAborting			   := FALSE,
+			bDisableHolding				   := FALSE,
+			bDisableHeld				   := FALSE,
+			bDisableUnholding			   := FALSE,
+			bDisableSuspending			   := FALSE,
+			bDisableUnsuspending		   := FALSE,
+			bDisableResetting			   := FALSE,
+			bDisableIdle				   := FALSE,
+			bDisableCompleting			   := FALSE,
+			bDisableComplete			   := FALSE,
+			bEnableUnitModeChangeStopped   := TRUE,
+			bEnableUnitModeChangeIdle	   := TRUE,
+			bEnableUnitModeChangeSuspended := TRUE,
+			bEnableUnitModeChangeExecute   := TRUE,
+			bEnableUnitModeChangeAborted   := TRUE,
+			bEnableUnitModeChangeHeld	   := TRUE,
+			bEnableUnitModeChangeComplete  := TRUE);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CyclicLogic" Id="{f82c43dc-2ed5-48a3-831c-a65c7c1e8bb3}" FolderPath="I_CyclicLogic\">
+      <Declaration><![CDATA[METHOD PUBLIC CyclicLogic]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT _InitComplete THEN
+	_InitComplete := Initialize();
+	RETURN;
+END_IF
+
+//Visitor
+Accept(Visitor := CollectOEE_MM);
+SUPER^.CyclicLogic();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Execute" Id="{756cc64d-9343-460c-b6a2-b999fc29246e}" FolderPath="Waiting\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Execute</b> state
+METHOD PROTECTED Execute
+(*! <description> <b>The base implementation of this method is empty. User must override this method to provide functionality.</b>
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Starting<b>-or-</b>Unholding <b>-or-</b>Unsuspending</td>
+		<td> State Complete<i>(Starting<b>-or-</b>Unholding<b>-or-</b>Unsuspending)</i></td> 
+		<td> State Complete<b>-or-</b>Hold Command<b>-or-</b>Suspend Command</td>
+		<td> Completing<b>-or-</b>Holding<b>-or-</b>Suspending</td>
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)
+VAR
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE _CurrentMode OF
+	E_PMLCustomMode.Production:
+		CASE DescendantSequenceState OF
+			0:
+				Infeed.CmdInfeed.StartConveyor := TRUE;
+				IF Infeed.StsInfeed.ConveyorRunning THEN
+					Infeed.CmdInfeed.StartConveyor := FALSE;
+					fbTON_InfeedRun(IN := FALSE);
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			10:
+				fbTON_InfeedRun(IN := TRUE, PT := T#3S);
+				IF fbTON_InfeedRun.Q THEN
+					Infeed.CmdInfeed.StopConveyor := TRUE;
+					DescendantSequenceState		  := DescendantSequenceState + 10;
+				END_IF
+
+			20:
+				IF NOT Infeed.StsInfeed.ConveyorRunning THEN
+					Infeed.CmdInfeed.StopConveyor	  := FALSE;
+					Process.StsProcess.ProductAtReady := TRUE;
+					fbTON_ProcessDelay(IN := FALSE);
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			30:
+				fbTON_ProcessDelay(IN := TRUE, PT := T#1.5S);
+				IF fbTON_ProcessDelay.Q THEN
+					Process.StsProcess.ProductAtReady := FALSE;
+					Process.StsProcess.ProductInPos	  := TRUE;
+					DescendantSequenceState			  := DescendantSequenceState + 10;
+				END_IF
+
+			40:
+				IF Process.StsProcess.ProcessComplete THEN
+					Process.StsProcess.ProcessComplete := FALSE;
+					Outfeed.StsOutfeed.ProductAtReady  := TRUE;
+					DescendantSequenceState			   := DescendantSequenceState + 10;
+				END_IF
+
+			50:
+				IF Outfeed.StsOutfeed.ConveyorRunning THEN
+					Outfeed.StsOutfeed.ProductAtReady := FALSE;
+					fbTON_OutfeedRun(IN := FALSE);
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			60:
+				fbTON_OutfeedRun(IN := TRUE, PT := T#3S);
+				IF fbTON_OutfeedRun.Q THEN
+					Outfeed.StsOutfeed.ProductRemoved := TRUE;
+					DescendantSequenceState			  := DescendantSequenceState + 10;
+				END_IF
+
+			70:
+				IF NOT Outfeed.StsOutfeed.ConveyorRunning THEN
+					Outfeed.StsOutfeed.ProductRemoved := FALSE;
+					DescendantSequenceState			  := 0;
+				END_IF
+		END_CASE
+
+	E_PMLCustomMode.Home:
+		_StsCommon.Homed := TRUE;
+END_CASE
+
+SUPER^.Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialize" Id="{07aaa0ed-cdc4-4c34-8613-f4f8145e0f6a}" FolderPath="Initialize\">
+      <Declaration><![CDATA[METHOD PROTECTED Initialize : BOOL
+VAR
+	i: UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Initialize := FALSE;
+CASE DescendantSequenceState OF
+	0: //Register Modules
+		RegisterSubmodule(Infeed);
+		RegisterSubmodule(Process);
+		RegisterSubmodule(Outfeed);
+
+		//Register Components
+		RegisterComponent(StackLight);
+
+		//I_CommonModule
+		ipCommonModules[1] := Infeed;
+		ipCommonModules[2] := Process;
+		ipCommonModules[3] := Outfeed;
+
+		//I_CommonComponent
+		ipComponents[1] := StackLight;
+
+		//Setup Config
+		_LogModeChanges			:= FALSE;
+		_LogStateChanges		:= FALSE;
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	10: // Configure Custom Modes
+		CreateCustomModes();
+
+		// Copy Mode names
+		FOR i := 1 TO 10 DO
+			ModeNames[i] := F_UnitModeToString(UDINT_TO_DINT(i));
+		END_FOR
+
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	20:
+		//Initialize_Recipes();
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	30: // Call the Super 
+		IF SUPER^.Initialize() THEN
+			DescendantSequenceState := DescendantSequenceState + 10;
+		END_IF
+
+	40:
+		Initialize := TRUE;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="RcpMachine" Id="{f38b12a8-a6af-4109-ba56-e3b5f1f86775}" FolderPath="I_MachineModule\">
+      <Declaration><![CDATA[PROPERTY RcpMachine : REFERENCE TO ST_MachineRecipe]]></Declaration>
+      <Get Name="Get" Id="{d30c764f-8242-4205-a18c-d093f9fe0c82}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[RcpMachine REF= _RcpMachine;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="StsMachine" Id="{3cb6ec70-d991-48b2-a6c4-bc9661147985}" FolderPath="I_MachineModule\">
+      <Declaration><![CDATA[PROPERTY StsMachine : reference to ST_MachineStatus]]></Declaration>
+      <Get Name="Get" Id="{49525a02-5d7a-42f5-8bce-7b90081dab31}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[StsMachine REF= _StsMachine;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="Machine">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Machine.CfgMachine.Get">
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="Machine.CmdMachine.Get">
+      <LineId Id="8" Count="0" />
+    </LineIds>
+    <LineIds Name="Machine.CreateCustomModes">
+      <LineId Id="562" Count="97" />
+      <LineId Id="210" Count="0" />
+    </LineIds>
+    <LineIds Name="Machine.CyclicLogic">
+      <LineId Id="45" Count="6" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Machine.Execute">
+      <LineId Id="893" Count="65" />
+      <LineId Id="48" Count="0" />
+    </LineIds>
+    <LineIds Name="Machine.Initialize">
+      <LineId Id="355" Count="43" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Machine.RcpMachine.Get">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Machine.StsMachine.Get">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

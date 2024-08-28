@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="I_MachineModule" Id="{1b8c919d-1463-43ba-aa63-9746ee99167e}">
+    <Declaration><![CDATA[INTERFACE I_MachineModule
+]]></Declaration>
+    <Property Name="CfgMachine" Id="{ac5904f6-49d1-4057-92d2-d0f12b795475}">
+      <Declaration><![CDATA[PROPERTY CfgMachine : REFERENCE TO ST_MachineConfig]]></Declaration>
+      <Get Name="Get" Id="{25a8df1c-ce79-422b-9c49-49b06f5c8b6f}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="CmdMachine" Id="{ecf12515-bf52-489a-9250-e1618d94752f}">
+      <Declaration><![CDATA[PROPERTY CmdMachine : REFERENCE TO ST_MachineCommand]]></Declaration>
+      <Get Name="Get" Id="{94a361d3-3748-48e1-ad79-5c823cfa3fe4}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="RcpMachine" Id="{938e5878-6208-4368-8853-13185bfc7d3e}">
+      <Declaration><![CDATA[PROPERTY RcpMachine : REFERENCE TO ST_MachineRecipe]]></Declaration>
+      <Get Name="Get" Id="{79134ecd-bd12-4820-9f3a-ff1feeeb6d72}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="StsMachine" Id="{9ffd5705-26a6-4130-b66c-a5a765360e7e}">
+      <Declaration><![CDATA[PROPERTY StsMachine : REFERENCE TO ST_MachineStatus]]></Declaration>
+      <Get Name="Get" Id="{bc383727-6ba1-4574-bc40-7ec276904bf7}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

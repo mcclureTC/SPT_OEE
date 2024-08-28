@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="I_CommonModule" Id="{c1c2fedf-141b-443d-8c99-04d74e1cb5d0}">
+    <Declaration><![CDATA[INTERFACE I_CommonModule EXTENDS I_PackML_BaseModule]]></Declaration>
+    <Method Name="Accept" Id="{2b362cbb-fd0f-4902-9130-e8e4831dd40c}">
+      <Declaration><![CDATA[METHOD Accept
+VAR_INPUT
+	Visitor : I_VisitModules;
+END_VAR]]></Declaration>
+    </Method>
+    <Property Name="CfgCommon" Id="{28496a76-5d24-48b0-86d2-fec658bbdac0}">
+      <Declaration><![CDATA[PROPERTY CfgCommon : reference to ST_ConfigCommon]]></Declaration>
+      <Get Name="Get" Id="{e7a30276-6a18-44dc-83ad-e3ef560b4383}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="CmdCommon" Id="{187f5d9c-d39c-427b-a739-1ce9b61f21e5}">
+      <Declaration><![CDATA[PROPERTY CmdCommon : REFERENCE TO ST_CommandCommon]]></Declaration>
+      <Get Name="Get" Id="{964771ac-6f0f-4d72-8f0c-42d5b6c01f28}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="RcpCommon" Id="{495a8459-8977-4247-89f8-df3dd01edaf6}">
+      <Declaration><![CDATA[PROPERTY RcpCommon : reference to ST_RecipeCommon]]></Declaration>
+      <Get Name="Get" Id="{511ed754-46a9-433d-afdc-695b8e9ec6a1}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="StsCommon" Id="{fada4c37-0ad8-4194-bc87-cc9edf97b232}">
+      <Declaration><![CDATA[PROPERTY StsCommon : REFERENCE TO ST_StatusCommon]]></Declaration>
+      <Get Name="Get" Id="{e85d9af3-0202-423d-baaa-19058a391263}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

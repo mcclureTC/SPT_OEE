@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="MAIN" Id="{ea961c60-d45c-4486-93ea-715f8d5eb931}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	Machine		   : Machine := (Name := 'Machine');
+	Reset		   : BOOL;
+	Home		   : BOOL;
+	Start		   : BOOL;
+	Stop		   : BOOL;
+	ControlledStop : BOOL;
+	EmergencyStop  : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+	This sample was built to show a few different ways of implementing the various parts of the SPT Framework.
+	While the SPT Framework provides the FB_PackML_BaseModule, this Class focuses on providing the necessities from which to build upon.
+	
+	This sample uses a CommonModule Class that inheirts from the FB_PackML_BaseModule, and does most of the work for managing the state machine of the system's modules.
+		This allows for the code that interacts with the Components of a Module to be the primary focuis of the EM.
+ 	The CommonModule implements the Command and Status Structures which allows for interaction with a modules state machine. Common commands such as Start, Stop, Reset, and Home 
+		are sent through the CmdCommon structure. Common Status of the modules can be read through the StsCommon structure.
+	For consistency each Equipment Module also has a Cmd and Sts structure named for the EM; for example, CmdInfeed or StsProcess. 
+		These hold the more specific EM commands such as Conveyor Start and Conveyor Stop, and a similar Status structure for Conveyor Running or Cylinder Extended.
+		It is important to note that all of these structures have a concrete instance defined within the EM, and a property getter that gets a reference to that concretion. 
+		This means that it is possible to read and write to the structure through the getter of the propoerty.
+	This overall design allows for the code to Stop, Reset, Enable/Disable; that most all components are going to need, to be placed in the CommonModule. Thereby providing the possibility
+		to reduce the code in the EMs to only managing what is unique about the EM. This does require the use of interfaces and the __QUERYINTERFACE method, 
+		in order to only send axis command to an axis, but it does allow us to efficiently send commands to all axes within an EM at the same time.
+		Additionally, if components built by the user implement a common interface to a structure then these components can all be managed through that interface from the CommonModule.
+		
+	IMPORTANT NOTE:
+	The CommonModule makes extensive use of the variable SequenceState throughout the Acting and Execute methods. 
+	Therefore it is reccomend to only use the DescendantSequenceState variable within the EMs.
+	
+*)
+Machine.CyclicLogic();
+
+(*
+If Not Homed Abort -> Idle, Change Mode to Home, Idle -> Execute
+If Homed Abort -> Idle in Mode Production *)
+IF Reset THEN
+	Reset					:= FALSE;
+	Machine.CmdCommon.Reset := TRUE; //Needs to be ignored if state not valid for reset
+END_IF
+
+(*
+In Home.Execute start Homing Sequence
+After Homing finished, Execute -> Suspended, ModeChange to Production *)
+IF Home THEN
+	Home				   := FALSE;
+	Machine.CmdCommon.Home := TRUE; ////Needs to be ignored if state not valid for Home
+END_IF
+
+(*
+Production.Idle -> Execute
+Production.Suspended -> Execute *)
+IF Start THEN
+	Start					:= FALSE;
+	Machine.CmdCommon.Start := TRUE; //Needs to be ignored if state not valid for start
+END_IF
+
+IF ControlledStop THEN
+	ControlledStop					 := FALSE;
+	Machine.CmdCommon.ControlledStop := TRUE;
+	Machine.ChangeState(State := E_PMLCommand.ePMLCommand_Stop);
+END_IF
+
+IF EmergencyStop THEN
+	EmergencyStop					:= FALSE;
+	Machine.CmdCommon.EmergencyStop := TRUE;
+	Machine.ChangeState(State := E_PMLCommand.ePMLCommand_Abort);
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="810" Count="20" />
+      <LineId Id="836" Count="36" />
+      <LineId Id="309" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

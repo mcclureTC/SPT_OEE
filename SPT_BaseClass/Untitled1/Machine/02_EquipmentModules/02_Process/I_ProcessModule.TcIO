@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="I_ProcessModule" Id="{fc616174-a6ba-448d-83b0-b46f9ee22b2b}">
+    <Declaration><![CDATA[INTERFACE I_ProcessModule]]></Declaration>
+    <Property Name="CfgProcess" Id="{e271ca33-1908-4109-8eb2-c9622630ed16}">
+      <Declaration><![CDATA[PROPERTY CfgProcess : REFERENCE TO ST_ProcessConfig]]></Declaration>
+      <Get Name="Get" Id="{36bdb3ef-af77-4d81-898b-507dd8d7b178}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="CmdProcess" Id="{726550ac-7b96-4755-8d6d-f0d79337132b}">
+      <Declaration><![CDATA[PROPERTY CmdProcess : REFERENCE TO ST_ProcessCommand]]></Declaration>
+      <Get Name="Get" Id="{45906690-27df-4b46-a4d7-6ca5a1def1a1}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="RcpProcess" Id="{07d0e4a6-6b35-470c-8eb6-f0e7030c9453}">
+      <Declaration><![CDATA[PROPERTY RcpProcess : REFERENCE TO ST_ProcessRecipe]]></Declaration>
+      <Get Name="Get" Id="{519e4654-84f7-4efe-a2b3-daf1a8b821f3}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="StsProcess" Id="{d8f18386-97e4-4370-bb34-bbcdd9b56bab}">
+      <Declaration><![CDATA[PROPERTY StsProcess : REFERENCE TO ST_ProcessStatus]]></Declaration>
+      <Get Name="Get" Id="{3e55ef08-1d01-42af-abce-cfb45b7d7764}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

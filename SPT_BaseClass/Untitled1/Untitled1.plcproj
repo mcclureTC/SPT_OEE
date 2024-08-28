@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <FileVersion>1.0.0.0</FileVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{edaee9b7-1448-4724-abb0-9000ad8af482}</ProjectGuid>
+    <SubObjectsSortedByName>True</SubObjectsSortedByName>
+    <DownloadApplicationInfo>true</DownloadApplicationInfo>
+    <WriteProductVersion>true</WriteProductVersion>
+    <GenerateTpy>false</GenerateTpy>
+    <Name>Untitled1</Name>
+    <ProgramVersion>3.1.4024.0</ProgramVersion>
+    <Application>{bdf61a81-b06e-428d-b776-4ffa7b268105}</Application>
+    <TypeSystem>{fb6e20bf-c632-48fa-a192-1c4d6e6bf59b}</TypeSystem>
+    <Implicit_Task_Info>{364229b6-484c-4414-ad42-749d0524c0c3}</Implicit_Task_Info>
+    <Implicit_KindOfTask>{c8308eff-c718-4578-a5b8-caf090c4e12a}</Implicit_KindOfTask>
+    <Implicit_Jitter_Distribution>{8f78ff2e-8aa0-428d-a1c2-d973fa48c417}</Implicit_Jitter_Distribution>
+    <LibraryReferences>{315d097e-3371-4551-8a5a-133e774b0c95}</LibraryReferences>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="DUTs\E_PMLCustomMode.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\01_MachineModule\DUTs\ST_MachineCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\01_MachineModule\DUTs\ST_MachineConfig.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\01_MachineModule\DUTs\ST_MachineRecipe.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\01_MachineModule\DUTs\ST_MachineStatus.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\01_MachineModule\I_MachineModule.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\01_MachineModule\Machine.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\01_Infeed\DUTs\ST_InfeedConfig.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\01_Infeed\DUTs\ST_InfeedRecipe.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\01_Infeed\DUTs\ST_InfeedStatus.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\01_Infeed\DUTs\ST_InfeedCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\01_Infeed\EM_InfeedModule.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\01_Infeed\I_InfeedModule.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\02_Process\DUTs\ST_ProcessCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\02_Process\DUTs\ST_ProcessConfig.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\02_Process\DUTs\ST_ProcessRecipe.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\02_Process\DUTs\ST_ProcessStatus.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\02_Process\EM_ProcessModule.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\02_Process\I_ProcessModule.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\03_Outfeed\DUTs\ST_OutfeedCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\03_Outfeed\DUTs\ST_OutfeedConfig.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\03_Outfeed\DUTs\ST_OutfeedRecipe.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\03_Outfeed\DUTs\ST_OutfeedStatus.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\03_Outfeed\EM_OutfeedModule.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\02_EquipmentModules\03_Outfeed\I_OutfeedModule.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\03_Components\FB_Component_StackLight.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Machine\03_Components\FB_Component_TwinSAFE_Monitor.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PlcTask.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\CD_CommonModule.TcCD">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\CD_Visitor.TcCD">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Common\Component\CommonComponent.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Common\Component\I_CommonComponent.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Common\Module\CommonModule.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Common\Module\DUTs\ST_CommandCommon.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Common\Module\DUTs\ST_ConfigCommon.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Common\Module\DUTs\ST_RecipeCommon.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Common\Module\DUTs\ST_StatusCommon.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Common\Module\I_CommonModule.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\MAIN.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Visitors\FB_CollectOEE.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Visitors\I_VisitModules.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DUTs" />
+    <Folder Include="GVLs" />
+    <Folder Include="Machine" />
+    <Folder Include="Machine\01_MachineModule" />
+    <Folder Include="Machine\01_MachineModule\DUTs" />
+    <Folder Include="Machine\02_EquipmentModules" />
+    <Folder Include="Machine\02_EquipmentModules\01_Infeed\DUTs" />
+    <Folder Include="Machine\02_EquipmentModules\01_Infeed" />
+    <Folder Include="Machine\02_EquipmentModules\02_Process" />
+    <Folder Include="Machine\02_EquipmentModules\02_Process\DUTs" />
+    <Folder Include="Machine\02_EquipmentModules\03_Outfeed" />
+    <Folder Include="Machine\02_EquipmentModules\03_Outfeed\DUTs" />
+    <Folder Include="Machine\03_Components" />
+    <Folder Include="POUs\Common" />
+    <Folder Include="POUs\Common\Module" />
+    <Folder Include="POUs\Common\Component" />
+    <Folder Include="POUs\Common\Module\DUTs" />
+    <Folder Include="Visitors" />
+    <Folder Include="VISUs" />
+    <Folder Include="POUs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PlaceholderReference Include="SPT Base Types">
+      <DefaultResolution>SPT Base Types, * (Beckhoff Automation LLC)</DefaultResolution>
+      <Namespace>SPT_BaseTypes</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="SPT Components">
+      <DefaultResolution>SPT Components, * (Beckhoff Automation LLC)</DefaultResolution>
+      <Namespace>SPT_Components</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="SPT Event Logger">
+      <DefaultResolution>SPT Event Logger, * (Beckhoff Automation LLC)</DefaultResolution>
+      <Namespace>SPT_EventLogger</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="SPT Motion Control">
+      <DefaultResolution>SPT Motion Control, * (Beckhoff Automation LLC)</DefaultResolution>
+      <Namespace>SPT_Motion_Control</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_EtherCAT">
+      <DefaultResolution>Tc2_EtherCAT, * (Beckhoff Automation GmbH)</DefaultResolution>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Standard">
+      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Standard</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_System">
+      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_EventLogger">
+      <DefaultResolution>Tc3_EventLogger, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_EventLogger</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Module">
+      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Module</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_PackML_V2">
+      <DefaultResolution>Tc3_PackML_V2, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_PackML_V2</Namespace>
+    </PlaceholderReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Untitled1.tmc">
+      <SubType>Content</SubType>
+    </None>
+  </ItemGroup>
+  <ProjectExtensions>
+    <PlcProjectOptions>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="OptionKey">
+      <v n="Name">"&lt;ProjectRoot&gt;"</v>
+      <d n="SubKeys" t="Hashtable" />
+      <d n="Values" t="Hashtable" />
+    </o>
+        </Data>
+        <TypeList>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </PlcProjectOptions>
+  </ProjectExtensions>
+</Project>

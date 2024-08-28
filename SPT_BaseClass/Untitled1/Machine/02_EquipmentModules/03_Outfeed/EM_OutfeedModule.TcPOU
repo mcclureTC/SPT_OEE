@@ -1,0 +1,232 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="EM_OutfeedModule" Id="{7cfe66d8-35ba-4314-bc5b-79de6dfce221}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK EM_OutfeedModule EXTENDS CommonModule IMPLEMENTS I_OutfeedModule
+VAR
+	//Components
+	Axis : FB_Component_BasicAxis;
+
+	//
+	_CmdOutfeed : ST_OutfeedCommand;
+	_StsOutfeed : ST_OutfeedStatus;
+	_CfgOutfeed : ST_OutfeedConfig;
+	_RcpOutfeed : ST_OutfeedRecipe;
+
+	//Test Vars
+	Homed : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Folder Name="I_CyclicLogic" Id="{bff73ff0-91fb-43bc-8249-92d4b9647678}" />
+    <Folder Name="I_OutfeedModule" Id="{69613287-f892-473e-b1d8-0484c46e7d3a}" />
+    <Folder Name="Initialize" Id="{2f6fe5d0-4ad8-4db5-bcbb-919a2371bcc0}" />
+    <Folder Name="Waiting" Id="{90aacb5d-d031-4a9a-a8b9-804c40c70e47}" />
+    <Property Name="CfgOutfeed" Id="{a44dd973-0916-4949-a737-65d3485b91ec}" FolderPath="I_OutfeedModule\">
+      <Declaration><![CDATA[PROPERTY CfgOutfeed : REFERENCE TO ST_OutfeedConfig]]></Declaration>
+      <Get Name="Get" Id="{319902ff-1362-472b-b229-c462e2493a5e}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CfgOutfeed REF= _CfgOutfeed;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="CmdOutfeed" Id="{4c76f708-fd44-49ee-89dc-ce3046ef3f80}" FolderPath="I_OutfeedModule\">
+      <Declaration><![CDATA[PROPERTY CmdOutfeed : REFERENCE TO ST_OutfeedCommand
+]]></Declaration>
+      <Get Name="Get" Id="{b3b04fb8-826d-4de2-b263-f0bc53875584}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CmdOutfeed REF= _CmdOutfeed;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="CyclicLogic" Id="{4340cd9c-c928-4e0a-bb64-e13a6fc3c8ca}" FolderPath="I_CyclicLogic\">
+      <Declaration><![CDATA[METHOD PUBLIC CyclicLogic]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT _InitComplete THEN
+	_InitComplete := Initialize();
+	RETURN;
+END_IF
+
+SUPER^.CyclicLogic();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Execute" Id="{72fd1940-d387-4987-ac34-491b6521b66b}" FolderPath="Waiting\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Execute</b> state
+METHOD PROTECTED Execute
+(*! <description> <b>The base implementation of this method is empty. User must override this method to provide functionality.</b>
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Starting<b>-or-</b>Unholding <b>-or-</b>Unsuspending</td>
+		<td> State Complete<i>(Starting<b>-or-</b>Unholding<b>-or-</b>Unsuspending)</i></td> 
+		<td> State Complete<b>-or-</b>Hold Command<b>-or-</b>Suspend Command</td>
+		<td> Completing<b>-or-</b>Holding<b>-or-</b>Suspending</td>
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)
+VAR
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE _CurrentMode OF
+	E_PMLCustomMode.Production:
+		CASE DescendantSequenceState OF
+			0:
+				IF _StsOutfeed.ProductAtReady THEN
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			10:
+				IF Axis.MoveVelocity(10.0, 0) THEN
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			20:
+				IF Axis.Axis.Status.Moving THEN
+					_StsOutfeed.ProductAtReady	:= FALSE;
+					_StsOutfeed.ConveyorRunning := TRUE;
+				END_IF
+
+				IF _StsOutfeed.ProductRemoved THEN
+					_CmdOutfeed.StopConveyor := FALSE;
+					Axis.Stop();
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			30:
+				IF Axis.Axis.Status.NotMoving THEN
+					_StsOutfeed.ConveyorRunning := FALSE;
+					DescendantSequenceState		:= 0;
+				END_IF
+		END_CASE
+
+	E_PMLCustomMode.Home:
+		CASE DescendantSequenceState OF
+			0:
+				IF _CmdCommon.Home AND NOT _StsCommon.Homed THEN
+					_CmdCommon.Home := FALSE;
+					Axis.Home();
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			10:
+				IF Axis.Axis.Status.Homed THEN
+					_StsCommon.Homed := TRUE;
+				END_IF
+		END_CASE
+END_CASE
+
+SUPER^.Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialize" Id="{5233c20d-7b9b-4059-b797-40c895a2027a}" FolderPath="Initialize\">
+      <Declaration><![CDATA[METHOD PROTECTED Initialize : BOOL
+VAR
+	i: UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Initialize := FALSE;
+CASE DescendantSequenceState OF
+	0: //Register Modules
+
+		//Register Components
+		RegisterComponent(Axis);
+
+		//I_CommonModuleBase
+
+		//I_CommonComponent
+		ipComponents[1] := Axis;
+
+		//Setup Config
+		_LogModeChanges			:= FALSE;
+		_LogStateChanges		:= FALSE;
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	10:
+		// Copy Mode names
+		FOR i := 1 TO 10 DO
+			ModeNames[i] := F_UnitModeToString(UDINT_TO_DINT(i));
+		END_FOR
+
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	20:
+		//Initialize_Recipes();
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	30: // Call the Super 
+		IF SUPER^.Initialize() THEN
+			DescendantSequenceState := DescendantSequenceState + 10;
+		END_IF
+
+	40:
+		Initialize := TRUE;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="RcpOutfeed" Id="{0b12ebb9-62cb-4cc2-b1ed-ede402f73212}" FolderPath="I_OutfeedModule\">
+      <Declaration><![CDATA[PROPERTY RcpOutfeed : REFERENCE TO ST_OutfeedRecipe
+]]></Declaration>
+      <Get Name="Get" Id="{b53521d8-ac70-4d27-bdae-fb2b00cfbf2b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[RcpOutfeed REF= _RcpOutfeed;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="StsOutfeed" Id="{bf8eb5b2-3251-4d10-ad35-16de5a921b2c}" FolderPath="I_OutfeedModule\">
+      <Declaration><![CDATA[PROPERTY StsOutfeed : REFERENCE TO ST_OutfeedStatus
+]]></Declaration>
+      <Get Name="Get" Id="{b37dbd37-b31b-4a8d-9f29-40b363467d02}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[StsOutfeed REF= _StsOutfeed;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="EM_OutfeedModule">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_OutfeedModule.CfgOutfeed.Get">
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_OutfeedModule.CmdOutfeed.Get">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_OutfeedModule.CyclicLogic">
+      <LineId Id="11" Count="4" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_OutfeedModule.Execute">
+      <LineId Id="322" Count="47" />
+      <LineId Id="55" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_OutfeedModule.Initialize">
+      <LineId Id="103" Count="35" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_OutfeedModule.RcpOutfeed.Get">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_OutfeedModule.StsOutfeed.Get">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

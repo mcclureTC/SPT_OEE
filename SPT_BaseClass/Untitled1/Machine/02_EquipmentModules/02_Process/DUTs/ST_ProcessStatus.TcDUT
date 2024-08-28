@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_ProcessStatus" Id="{4d732124-5824-4fd4-afd4-50583954c95c}">
+    <Declaration><![CDATA[TYPE ST_ProcessStatus :
+	STRUCT
+		ProductAtReady	: BOOL;
+		ProductInPos	: BOOL;
+		ProcessComplete : BOOL;
+	END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

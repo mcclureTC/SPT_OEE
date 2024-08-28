@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="I_CommonComponent" Id="{5524175d-a60e-4641-b792-c92b917ff8cb}">
+    <Declaration><![CDATA[INTERFACE I_CommonComponent EXTENDS I_ComponentBase]]></Declaration>
+  </Itf>
+</TcPlcObject>

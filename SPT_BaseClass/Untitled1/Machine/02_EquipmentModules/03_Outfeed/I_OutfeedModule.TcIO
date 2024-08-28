@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="I_OutfeedModule" Id="{a270bc10-979d-4974-8beb-5485070ed871}">
+    <Declaration><![CDATA[INTERFACE I_OutfeedModule]]></Declaration>
+    <Property Name="CfgOutfeed" Id="{b1204b23-659f-4873-90b0-0f83aa3678a2}">
+      <Declaration><![CDATA[PROPERTY CfgOutfeed : REFERENCE TO ST_OutfeedConfig]]></Declaration>
+      <Get Name="Get" Id="{51bcbe5f-92c0-44af-8a7c-1176a0fa0464}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="CmdOutfeed" Id="{8176e77e-a962-4e76-96b9-57421a7e3c5e}">
+      <Declaration><![CDATA[PROPERTY CmdOutfeed : REFERENCE TO ST_OutfeedCommand
+]]></Declaration>
+      <Get Name="Get" Id="{6f786f40-8258-46c0-9440-50f278be1c9d}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="RcpOutfeed" Id="{962c6e7c-a0fa-4160-80f6-85b4dcb6280c}">
+      <Declaration><![CDATA[PROPERTY RcpOutfeed : REFERENCE TO ST_OutfeedRecipe
+]]></Declaration>
+      <Get Name="Get" Id="{2c772b01-7075-48a4-8033-c6faa9ea1c0d}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="StsOutfeed" Id="{15a20845-7409-45b1-b7fc-6ac5eeace1ac}">
+      <Declaration><![CDATA[PROPERTY StsOutfeed : REFERENCE TO ST_OutfeedStatus
+]]></Declaration>
+      <Get Name="Get" Id="{2fc23270-b8b3-42f0-b817-b56f91c808dd}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

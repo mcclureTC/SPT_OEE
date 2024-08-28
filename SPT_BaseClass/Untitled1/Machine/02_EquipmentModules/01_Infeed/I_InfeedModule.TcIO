@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="I_InfeedModule" Id="{84b9f046-0100-4599-8408-578c34a575cb}">
+    <Declaration><![CDATA[INTERFACE I_InfeedModule]]></Declaration>
+    <Property Name="CfgInfeed" Id="{b29931a9-9817-474e-8ca1-59c1457c649f}">
+      <Declaration><![CDATA[PROPERTY CfgInfeed : REFERENCE TO ST_InfeedConfig]]></Declaration>
+      <Get Name="Get" Id="{e0d3fd3e-6654-4bfd-853b-eee5bea719ce}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="CmdInfeed" Id="{e6301070-c211-41ad-81f3-4480d50714a9}">
+      <Declaration><![CDATA[PROPERTY CmdInfeed : REFERENCE TO ST_InfeedCommand]]></Declaration>
+      <Get Name="Get" Id="{f9e36858-40ee-4236-be6e-fcf9fe92ad12}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="RcpInfeed" Id="{634fabee-b302-4ec9-9dd0-33bdc60c8e4f}">
+      <Declaration><![CDATA[PROPERTY RcpInfeed : REFERENCE TO ST_InfeedRecipe]]></Declaration>
+      <Get Name="Get" Id="{779326bf-a771-4f91-a78d-e6249f69505d}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="StsInfeed" Id="{e288481d-1160-4ae0-940d-42a0dbe603a6}">
+      <Declaration><![CDATA[PROPERTY StsInfeed : REFERENCE TO ST_InfeedStatus]]></Declaration>
+      <Get Name="Get" Id="{0e99212c-9f64-47c8-986f-b9dd2f46ed97}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

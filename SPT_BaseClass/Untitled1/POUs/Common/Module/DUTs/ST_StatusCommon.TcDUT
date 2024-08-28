@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_StatusCommon" Id="{8a9c359f-6207-48be-a879-b5cdf4531915}">
+    <Declaration><![CDATA[TYPE ST_StatusCommon EXTENDS ST_PackMLBaseModule_Status :
+	STRUCT
+		Homed : BOOL;
+	END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

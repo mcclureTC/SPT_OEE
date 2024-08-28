@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="CommonComponent" Id="{4291c8c3-09fa-4d40-8961-3001474ab606}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK CommonComponent EXTENDS FB_ComponentBase
+VAR
+	ipCommonComponents : ARRAY[1..Parameters_PackML_Base.MAX_NO_OF_COMPONENTS] OF I_CommonComponent;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="RaiseAlarm2Args" Id="{3b444795-a02f-4331-ab15-8dec5e002fb2}">
+      <Declaration><![CDATA[METHOD RaiseAlarm2Args
+VAR_IN_OUT
+    Alarm : FB_TcAlarm; //Alarm to be raised
+END_VAR
+
+VAR_INPUT
+    String_1 : STRING; //First String Parameter (The Name of this component will be applied first automatically)
+    String_2 : STRING; //Second String Parameter
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[F_RaiseAlarmWithStringParameters(Alarm    := Alarm,
+                                 String_1 := Name,
+                                 String_2 := String_1,
+                                 String_3 := String_2);]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="CommonComponent">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonComponent.RaiseAlarm2Args">
+      <LineId Id="36" Count="2" />
+      <LineId Id="16" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

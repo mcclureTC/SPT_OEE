@@ -1,0 +1,212 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="EM_InfeedModule" Id="{828f57ab-7da5-47cd-b017-93f13844b929}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK EM_InfeedModule EXTENDS CommonModule IMPLEMENTS I_InfeedModule
+VAR
+	//Components
+	Axis		: FB_Component_BasicAxis;
+	
+
+	//
+	_CmdInfeed : ST_InfeedCommand;
+	_StsInfeed : ST_InfeedStatus;
+	_CfgInfeed : ST_InfeedConfig;
+	_RcpInfeed : ST_InfeedRecipe;
+
+	//Test Vars
+	Homed : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Folder Name="I_CyclicLogic" Id="{6bcc36a3-f6fb-43e6-bdff-9cb644422ea8}" />
+    <Folder Name="I_InfeedModule" Id="{b8832f77-a787-41f0-9ad5-91bd7bcd93c3}" />
+    <Folder Name="Initialize" Id="{84b3e1c4-2b46-4c8d-8cfb-40bc76f808c9}" />
+    <Folder Name="Waiting" Id="{45543455-9b31-4c0e-96a2-c1f40be23139}" />
+    <Property Name="CfgInfeed" Id="{08d4af67-dd7c-4f5a-9c95-28148465b241}" FolderPath="I_InfeedModule\">
+      <Declaration><![CDATA[PROPERTY CfgInfeed : REFERENCE TO ST_InfeedConfig]]></Declaration>
+      <Get Name="Get" Id="{d8c6b5c4-f395-4b07-aeba-2d3d4232e4e4}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CfgInfeed REF= _CfgInfeed;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="CmdInfeed" Id="{8bd772e0-9c0c-4bdb-a726-695392bfdbc8}" FolderPath="I_InfeedModule\">
+      <Declaration><![CDATA[PROPERTY CmdInfeed : REFERENCE TO ST_InfeedCommand]]></Declaration>
+      <Get Name="Get" Id="{65a7ef98-9b54-4a24-ab2d-1cc92cd57041}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CmdInfeed REF= _CmdInfeed;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="CyclicLogic" Id="{95c6f775-7845-4011-bdaa-94a13fa5b358}" FolderPath="I_CyclicLogic\">
+      <Declaration><![CDATA[METHOD PUBLIC CyclicLogic]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT _InitComplete THEN
+	_InitComplete := Initialize();
+	RETURN;
+END_IF
+
+SUPER^.CyclicLogic();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Execute" Id="{68ff55b9-3a3c-4074-88ba-3122ad867703}" FolderPath="Waiting\">
+      <Declaration><![CDATA[METHOD PROTECTED Execute
+VAR
+	i				  : UDINT;
+	AllComponentsDone : BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE _CurrentMode OF
+	E_PMLCustomMode.Production:
+		CASE DescendantSequenceState OF
+			0:
+				IF _CmdInfeed.StartConveyor THEN
+					_CmdInfeed.StartConveyor := FALSE;
+					DescendantSequenceState	 := DescendantSequenceState + 10;
+				END_IF
+
+			10:
+				IF Axis.MoveVelocity(10.0, 0) THEN
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			20:
+				IF Axis.Axis.Status.Moving THEN
+					_StsInfeed.ConveyorRunning := TRUE;
+				END_IF
+
+				IF _CmdInfeed.StopConveyor THEN
+					_CmdInfeed.StopConveyor := FALSE;
+					Axis.Stop();
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			30:
+				IF Axis.Axis.Status.NotMoving THEN
+					_StsInfeed.ConveyorRunning := FALSE;
+					DescendantSequenceState	   := 0;
+				END_IF
+		END_CASE
+
+	E_PMLCustomMode.Home:
+		CASE DescendantSequenceState OF
+			0:
+				IF _CmdCommon.Home AND NOT _StsCommon.Homed THEN
+					_CmdCommon.Home := FALSE;
+					Axis.Home();
+					DescendantSequenceState := DescendantSequenceState + 10;
+				END_IF
+
+			10:
+				IF Axis.Axis.Status.Homed THEN
+					_StsCommon.Homed := TRUE;
+				END_IF
+		END_CASE
+END_CASE
+
+SUPER^.Execute();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialize" Id="{366e5c11-21c6-423b-8115-eb1ed59761f6}" FolderPath="Initialize\">
+      <Declaration><![CDATA[METHOD PROTECTED Initialize : BOOL
+VAR
+	i: UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Initialize := FALSE;
+CASE DescendantSequenceState OF
+	0: //Register Modules
+
+		//Register Components
+		RegisterComponent(Axis);
+
+		//I_CommonModuleBase
+
+		//I_CommonComponent
+		ipComponents[1] := Axis;
+
+		//Setup Config
+		_LogModeChanges			:= FALSE;
+		_LogStateChanges		:= FALSE;
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	10:
+		// Copy Mode names
+		FOR i := 1 TO 10 DO
+			ModeNames[i] := F_UnitModeToString(UDINT_TO_DINT(i));
+		END_FOR
+
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	20:
+		//Initialize_Recipes();
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	30: // Call the Super 
+		IF SUPER^.Initialize() THEN
+			DescendantSequenceState := DescendantSequenceState + 10;
+		END_IF
+
+	40:
+		Initialize := TRUE;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="RcpInfeed" Id="{23026538-8dc6-49a9-9e35-032ac8866389}" FolderPath="I_InfeedModule\">
+      <Declaration><![CDATA[PROPERTY RcpInfeed : REFERENCE TO ST_InfeedRecipe]]></Declaration>
+      <Get Name="Get" Id="{496834d8-5f35-4e72-a9f8-6d5194488c2a}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[RcpInfeed REF= _RcpInfeed;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="StsInfeed" Id="{39693e42-4985-4ce8-bece-1566f77b767b}" FolderPath="I_InfeedModule\">
+      <Declaration><![CDATA[PROPERTY StsInfeed : REFERENCE TO ST_InfeedStatus]]></Declaration>
+      <Get Name="Get" Id="{c1d17dfd-5b15-4e16-bae7-40054ae28c39}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[StsInfeed REF= _StsInfeed;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="EM_InfeedModule">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_InfeedModule.CfgInfeed.Get">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_InfeedModule.CmdInfeed.Get">
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_InfeedModule.CyclicLogic">
+      <LineId Id="11" Count="4" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_InfeedModule.Execute">
+      <LineId Id="729" Count="47" />
+      <LineId Id="55" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_InfeedModule.Initialize">
+      <LineId Id="104" Count="35" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_InfeedModule.RcpInfeed.Get">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="EM_InfeedModule.StsInfeed.Get">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

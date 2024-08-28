@@ -1,0 +1,886 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="CommonModule" Id="{5a8e69f9-d98e-438c-bc0c-6b956e81788e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK CommonModule EXTENDS FB_PackML_BaseModule IMPLEMENTS I_CommonModule
+VAR
+	//
+	ipCommonModules : ARRAY[1..3] OF I_CommonModule;
+	ipCommonModule	: I_CommonModule;
+	ipBasicAxis		: I_BasicAxis;
+	ipProcessModule : I_ProcessModule;
+
+	//
+	_CmdCommon : ST_CommandCommon;
+	_StsCommon : ST_StatusCommon;
+	_CfgCommon : ST_ConfigCommon;
+	_RcpCommon : ST_RecipeCommon;
+
+	//Debug Help
+	aCurrentState : ARRAY[1..3] OF E_PMLState;
+
+
+
+	//Visitor
+	CollectOEE_EMs : ARRAY[1..3] OF FB_CollectOEE;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Folder Name="ActingStates" Id="{98d49002-d70c-40a5-8116-9e2ce1d80970}" />
+    <Folder Name="I_CommonModule" Id="{6f2f4f59-eb48-49d4-bbec-2e8ba61cdcf5}" />
+    <Folder Name="I_CyclicLogic" Id="{d7065e23-8907-4ae0-bf65-dbebd67050df}" />
+    <Folder Name="Methods" Id="{25deea03-5bb3-4a8e-add5-212e78aff65e}" />
+    <Folder Name="Visitor" Id="{4b888751-6253-4d1c-9043-491e41a11a86}" />
+    <Folder Name="WaitingStates" Id="{7c363558-def3-495e-be4e-f8189bb85928}" />
+    <Method Name="Aborted" Id="{3155088e-e6c9-4927-a922-6aff1ce0b59a}" FolderPath="WaitingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Aborted</b> state
+METHOD PROTECTED Aborted
+
+(*! <description> <b>The base implementation of this method is empty. User must override this method to provide functionality.</b>
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Aborting </td>
+		<td> State Complete <i>(Aborting)</i></td> 
+		<td> Clear Command </td>
+		<td> Clearing </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF _CmdCommon.Reset THEN
+	//_Cmd.Reset := FALSE;//If used, then the reset button will need to be pressed twice after Abort
+	_CmdCommon.EmergencyStop := FALSE;
+	ChangeState(State := E_PMLCommand.ePMLCommand_Clear);
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Aborting" Id="{3bbe7cfa-46cc-44bc-b57a-6079ea629bb0}" FolderPath="ActingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Aborting</b> state
+METHOD PROTECTED Aborting
+VAR
+	i				: UDINT;
+	SubModulesReady : BOOL := TRUE;
+	AllAxesDone		: BOOL;
+END_VAR
+
+(*! <description> <b>Note:</b> The <i>Abort</i> command should be associated with the fault handing routine of a module. It should not be directly commanded from any user inteface. 
+
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> <b>ANY</b> </td>
+		<td> Abort Command </td> 
+		<td> State Complete </td>
+		<td> Aborted </td> 
+	</tr>
+</table>
+
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE SequenceState OF
+	0:
+		NoStateTasksToComplete := FALSE;
+		SequenceState		   := SequenceState + 10;
+
+	10:
+		//Stop all motion axes
+		FOR i := 1 TO NumberOfComponents DO
+			IF __QUERYINTERFACE(ipComponents[i], ipBasicAxis) THEN
+				IF NOT ipBasicAxis.Stopped THEN
+					ipBasicAxis.Stop();
+				END_IF
+			END_IF
+		END_FOR
+
+		SequenceState := SequenceState + 10;
+
+	20:
+		//Wait for all motion axes to be stopped
+		AllAxesDone := TRUE;
+		FOR i := 1 TO NumberOfComponents DO
+			IF __QUERYINTERFACE(ipComponents[i], ipBasicAxis) THEN
+				IF NOT ipBasicAxis.Stopped THEN
+					AllAxesDone := FALSE;
+				END_IF
+			END_IF
+		END_FOR
+
+		IF AllAxesDone THEN
+			SequenceState := SequenceState + 10;
+		END_IF
+
+	30:
+		//Disable all motion axes
+		FOR i := 1 TO NumberOfComponents DO
+			IF __QUERYINTERFACE(ipComponents[i], ipBasicAxis) THEN
+				IF ipBasicAxis.Enabled THEN
+					ipBasicAxis.Disable();
+				END_IF
+			END_IF
+		END_FOR
+
+		SequenceState := SequenceState + 10;
+
+	40:
+		//Wait for all motion axes to be Disabled
+		AllAxesDone := TRUE;
+		FOR i := 1 TO NumberOfComponents DO
+			IF __QUERYINTERFACE(ipComponents[i], ipBasicAxis) THEN
+				IF ipBasicAxis.Enabled THEN
+					AllAxesDone := FALSE;
+				END_IF
+			END_IF
+		END_FOR
+
+		IF AllAxesDone THEN
+			SequenceState := SequenceState + 10;
+		END_IF
+
+	50: //ipCommonModules
+		FOR i := 1 TO NumberOfComponents DO
+			IF __QUERYINTERFACE(ipCommonModules[i], ipProcessModule) THEN
+				ipProcessModule.CmdProcess.MoveToAbortPos := TRUE;
+			END_IF
+		END_FOR
+
+		SequenceState := SequenceState + 10;
+
+	60:
+		StateTasksComplete := true;
+END_CASE
+
+SUPER^.Aborting();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Accept" Id="{f7883446-c706-40c1-bd41-bbcc233a5393}" FolderPath="Visitor\">
+      <Declaration><![CDATA[METHOD Accept
+VAR_INPUT
+	Visitor : I_VisitModules;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Visitor.VisitModule(THIS^);]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CfgCommon" Id="{e70a1a22-b240-4080-a0e1-2a37c3c0a332}" FolderPath="I_CommonModule\">
+      <Declaration><![CDATA[PROPERTY CfgCommon : reference to ST_ConfigCommon]]></Declaration>
+      <Get Name="Get" Id="{a7ff0168-7977-482c-a880-2a5e64e8d255}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CfgCommon REF= _CfgCommon;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Clearing" Id="{7052e6af-ca94-4452-956d-29a1b35c67e7}" FolderPath="ActingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Clearing</b> state
+METHOD PROTECTED Clearing
+VAR
+	i					 : UDINT;
+	SubModulesReady		 : BOOL := TRUE;
+	AllAxesEnabled : BOOL;
+	AllComponentsDone	 : BOOL;
+END_VAR
+
+(*! <description> <b>Note:</b> The <i>Clear</i> command can also be thought of as a <i>fault reset</i> depite the ambiguity in the naming of the <i>Reset</i> state. 
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Aborted </td>
+		<td> Clear Command </td> 
+		<td> State Complete </td>
+		<td> Stopped </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE _CurrentMode OF
+	E_PMLCustomMode.Production, E_PMLCustomMode.Home:
+		CASE SequenceState OF
+			0:
+				NoStateTasksToComplete := FALSE;
+				SequenceState		   := SequenceState + 10;
+
+			10:
+				//Reset and ENable All Axes
+				AllAxesEnabled := TRUE;
+				FOR i := 1 TO NumberOfComponents DO
+					IF __QUERYINTERFACE(ipComponents[i], ipBasicAxis) THEN
+						IF NOT ipBasicAxis.Error THEN
+							ipBasicAxis.Enable();
+						ELSE
+							ipBasicAxis.Reset();
+							AllAxesEnabled := FALSE;
+						END_IF
+					END_IF
+				END_FOR
+
+				IF AllAxesEnabled THEN
+					SequenceState := SequenceState + 10;
+				END_IF
+
+			20:
+				StateTasksComplete := TRUE;
+		END_CASE
+END_CASE
+
+SUPER^.Clearing();]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CmdCommon" Id="{f6d6ff20-f07f-4ddf-aa0d-855021bb770a}" FolderPath="I_CommonModule\">
+      <Declaration><![CDATA[PROPERTY CmdCommon : REFERENCE TO ST_CommandCommon]]></Declaration>
+      <Get Name="Get" Id="{105a5486-10e4-4832-ac59-5f0a51969a21}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CmdCommon REF= _CmdCommon;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Complete" Id="{dbde3baa-d259-40a4-8eb4-a519c6b94070}" FolderPath="WaitingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Complete</b> state
+METHOD PROTECTED Complete
+
+(*! <description> <b>The base implementation of this method is empty. User must override this method to provide functionality.</b>
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Completing </td>
+		<td> State Complete <i>(Completing)</i></td> 
+		<td> Reset Command </td>
+		<td> Resetting </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ComponentMonitor" Id="{922e0920-7a30-46e3-a75e-fa3e79adab28}" FolderPath="I_CyclicLogic\">
+      <Declaration><![CDATA[//! @summary This method monitors <b>components</b> within this PackML module and initiates fault responses as required
+METHOD PROTECTED ComponentMonitor : BOOL
+VAR
+	AlarmResponses : ARRAY[0..4] OF E_AlarmResponse; //Temporary response array
+	i			   : UDINT;
+END_VAR
+
+//! @description This method is called cyclically by <c>CyclicLogic()</c>]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.ComponentMonitor();
+IF NumberOfComponents <> 0 THEN (* Update alarm severity from components *)
+	FOR i := 1 TO NumberOfComponents DO
+		IF ipComponents[i].CurrentAlarmSeverity > _CurrentAlarmSeverity THEN
+			_CurrentAlarmSeverity := ipComponents[i].CurrentAlarmSeverity;
+		END_IF
+	END_FOR
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CyclicLogic" Id="{4aada371-6a9d-4d4b-8409-7bfbc2386435}" FolderPath="I_CyclicLogic\">
+      <Declaration><![CDATA[METHOD PUBLIC CyclicLogic
+VAR
+	i : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT _InitComplete THEN
+	_InitComplete := Initialize();
+	RETURN;
+END_IF
+
+//Debug Help
+FOR i := 1 TO 3 DO
+	IF ipSubModules[i] <> 0 THEN
+		aCurrentState[i] := ipSubModules[i].CurrentState;
+	END_IF
+END_FOR
+
+_StsCommon.Mode	 := _CurrentMode;
+_StsCommon.State := _CurrentState;
+_CmdCommon.Mode	 := _CommandedMode;
+_CmdCommon.State := _CommandedState;
+
+//Visitor
+FOR i := 1 TO 3 DO
+	IF ipCommonModules[i] <> 0 THEN
+		ipCommonModules[i].Accept(Visitor := CollectOEE_EMs[i]);
+	END_IF
+END_FOR
+
+
+SUPER^.CyclicLogic();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Execute" Id="{30d856c7-65e9-442d-89db-db239b6748e3}" FolderPath="WaitingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Execute</b> state
+METHOD PROTECTED Execute
+
+(*! <description> <b>The base implementation of this method is empty. User must override this method to provide functionality.</b>
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Starting<b>-or-</b>Unholding <b>-or-</b>Unsuspending</td>
+		<td> State Complete<i>(Starting<b>-or-</b>Unholding<b>-or-</b>Unsuspending)</i></td> 
+		<td> State Complete<b>-or-</b>Hold Command<b>-or-</b>Suspend Command</td>
+		<td> Completing<b>-or-</b>Holding<b>-or-</b>Suspending</td>
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)
+VAR
+	allModulesHomed: BOOL;
+	i: UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE _CurrentMode OF
+	E_PMLCustomMode.Home:
+		CASE SequenceState OF
+			0:
+				IF _CmdCommon.Home THEN
+					FOR i := 1 TO SPT_BaseTypes.Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+						IF ipCommonModules[i] <> 0 THEN
+							ipCommonModules[i].CmdCommon.Home := TRUE;
+						END_IF
+					END_FOR
+
+					SequenceState := SequenceState + 10;
+				END_IF
+
+			10:
+				//Monitor all SubModules, when they have completed Homing, Change State to Suspend
+				allModulesHomed := TRUE;
+				FOR i := 1 TO SPT_BaseTypes.Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+					IF ipCommonModules[i] <> 0 THEN
+						IF ipCommonModules[i].StsCommon.Homed = FALSE THEN
+							allModulesHomed := FALSE;
+							EXIT;
+						END_IF
+					END_IF
+				END_FOR
+
+				IF allModulesHomed AND _StsCommon.Homed THEN
+					ChangeState(State := ePMLCommand_Suspend);
+				END_IF
+		END_CASE
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Idle" Id="{2bf4c49d-87e8-48d8-8d10-fbb29cedfdc4}" FolderPath="WaitingStates\">
+      <Declaration><![CDATA[METHOD PROTECTED Idle
+VAR
+	ChamgeMode		: INT;
+	i				: UDINT;
+	allModulesHomed : BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR i := 1 TO SPT_BaseTypes.Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+	IF ipCommonModules[i] <> 0 THEN
+		IF ipCommonModules[i].StsCommon.Homed = FALSE THEN
+			_StsCommon.Homed := FALSE;
+			EXIT;
+		END_IF
+	END_IF
+END_FOR
+
+IF NOT _StsCommon.Homed THEN
+	ChangeMode(Mode := E_PMLCustomMode.Home);
+END_IF
+
+CASE _CurrentMode OF
+	E_PMLProtectedUnitMode.ePMLProtUnitMode_Production:
+		CASE SequenceState OF
+			0:
+				IF _StsCommon.Homed THEN
+					SequenceState := SequenceState + 10;
+				END_IF
+
+			10:
+				IF _CmdCommon.Start THEN
+					_CmdCommon.Start := FALSE;
+					ChangeState(State := ePMLCommand_Start);
+				END_IF
+		END_CASE
+
+	E_PMLCustomMode.Home:
+		IF _CmdCommon.Home THEN
+			_CmdCommon.Home := FALSE;
+			FOR i := 1 TO SPT_BaseTypes.Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+				IF ipCommonModules[i] <> 0 THEN
+					ipCommonModules[i].CmdCommon.Home := TRUE;
+				END_IF
+			END_FOR
+		END_IF
+
+		ChangeState(State := ePMLCommand_Start);
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialize" Id="{bb883a4a-def6-425d-b146-0e1cffe3c06f}" FolderPath="Methods\">
+      <Declaration><![CDATA[METHOD PROTECTED Initialize : BOOL
+VAR
+	i: UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Initialize := SUPER^.Initialize();]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="RcpCommon" Id="{597257f5-04d5-4c1a-b860-5dc94b1b65c0}" FolderPath="I_CommonModule\">
+      <Declaration><![CDATA[PROPERTY RcpCommon : reference to ST_RecipeCommon]]></Declaration>
+      <Get Name="Get" Id="{fb136c4d-0ca6-4ea7-81e1-e81e4ce94f2d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[RcpCommon REF= _RcpCommon;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Resetting" Id="{6396eee2-8af9-4a78-b9ec-04cd421fe013}" FolderPath="ActingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Resetting</b> state
+METHOD PROTECTED Resetting
+VAR
+	i				: UDINT;
+	SubModulesReady : BOOL := TRUE;
+	AllAxesEnabled: BOOL;
+END_VAR
+
+(*! <description> <b>Note:</b> The <i>Reset</i> command can also be thought of as an <i>enable</i> depite the ambiguity in the naming of the <i>Clearing</i> state.
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Stopped<b>-or-</b>Completed </td>
+		<td> Reset Command </td> 
+		<td> State Complete </td>
+		<td> Idle </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE _CurrentMode OF
+	E_PMLCustomMode.Production, E_PMLCustomMode.Home:
+		CASE SequenceState OF
+			0:
+				NoStateTasksToComplete := FALSE;
+				SequenceState		   := SequenceState + 10;
+
+			10:
+				//Reset and ENable All Axes
+				AllAxesEnabled := TRUE;
+				FOR i := 1 TO NumberOfComponents DO
+					IF __QUERYINTERFACE(ipComponents[i], ipBasicAxis) THEN
+						IF NOT ipBasicAxis.Error THEN
+							ipBasicAxis.Enable();
+						ELSE
+							ipBasicAxis.Reset();
+							AllAxesEnabled := FALSE;
+						END_IF
+					END_IF
+				END_FOR
+
+				IF AllAxesEnabled THEN
+					SequenceState := SequenceState + 10;
+				END_IF
+
+			20:
+				StateTasksComplete := TRUE;
+		END_CASE
+END_CASE
+
+SUPER^.Resetting();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Starting" Id="{ba5abf7b-347d-43e6-9bb0-9b0d1acd1433}" FolderPath="ActingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Starting</b> state
+METHOD PROTECTED Starting
+VAR
+	i				: UDINT;
+	SubModulesReady : BOOL := TRUE;
+END_VAR
+
+(*! <description><b></b><table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Idle </td>
+		<td> Start Command </td> 
+		<td> State Complete </td>
+		<td> Execute </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Starting();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Stopped" Id="{0cfb8f9c-dd91-4683-991d-524abf57eed2}" FolderPath="WaitingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Stopped</b> state
+METHOD PROTECTED Stopped
+
+(*! <description> <b>The base implementation of this method is empty. User must override this method to provide functionality.</b>
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Stopping<b>-or-</b>Clearing </td>
+		<td> State Complete <i>(Stopping<b>-or-</b>Clearing)</i></td> 
+		<td> Reset Command </td>
+		<td> Resetting </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF _CmdCommon.Reset THEN
+	_CmdCommon.Reset		  := FALSE;
+	_CmdCommon.ControlledStop := FALSE;
+	ChangeState(State := E_PMLCommand.ePMLCommand_Reset);
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Stopping" Id="{4c69d4da-2c06-4b83-b41e-f98993a4924f}" FolderPath="ActingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Stopping</b> state
+METHOD PROTECTED Stopping
+VAR
+	i				  : UDINT;
+	SubModulesReady	  : BOOL := TRUE;
+	AllComponentsDone : BOOL;
+END_VAR
+
+(*! <description><b></b><table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> <b>ANY<i>except</i></b>Stopped<b>-or-</b>Clearing<b>-or-</b>Aborted<b>-or-</b>Aborting</td>
+		<td> Stop Command </td> 
+		<td> State Complete </td>
+		<td> Stopped </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE _CurrentMode OF
+	E_PMLCustomMode.Production, E_PMLCustomMode.Home:
+		CASE SequenceState OF
+			0:
+				NoStateTasksToComplete := FALSE;
+				SequenceState		   := SequenceState + 10;
+
+			10:
+				//Stop all motion axes
+				FOR i := 1 TO NumberOfComponents DO
+					IF __QUERYINTERFACE(ipComponents[i], ipBasicAxis) THEN
+						IF NOT ipBasicAxis.Stopped THEN
+							ipBasicAxis.Stop();
+						END_IF
+					END_IF
+				END_FOR
+
+				SequenceState := SequenceState + 10;
+
+			20:
+				//Wait for all motion axes to be stopped
+				AllComponentsDone := TRUE;
+				FOR i := 1 TO NumberOfComponents DO
+					IF __QUERYINTERFACE(ipComponents[i], ipBasicAxis) THEN
+						IF NOT ipBasicAxis.Stopped THEN
+							AllComponentsDone := FALSE;
+						END_IF
+					END_IF
+				END_FOR
+
+				IF AllComponentsDone THEN
+					SequenceState := SequenceState + 10;
+				END_IF
+
+			30:
+				StateTasksComplete := TRUE;
+		END_CASE
+END_CASE
+
+SUPER^.Stopping();]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="StsCommon" Id="{45a1f9a5-4ab4-435b-9bac-60bcc96be0d9}" FolderPath="I_CommonModule\">
+      <Declaration><![CDATA[PROPERTY StsCommon : REFERENCE TO ST_StatusCommon]]></Declaration>
+      <Get Name="Get" Id="{0a27ee79-41c2-4bed-a64b-e8b1386cbb84}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[StsCommon REF= _StsCommon;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="SubModuleMonitor" Id="{0e2755f2-ae30-4d18-abb0-e2159c0028d0}" FolderPath="I_CyclicLogic\">
+      <Declaration><![CDATA[//! @summary This method monitors <b>submodules</b> within this PackML module and initiates fault responses as required
+METHOD PROTECTED SubModuleMonitor : BOOL
+VAR
+	AlarmResponses : ARRAY[0..4] OF E_AlarmResponse; //Temporary response array	
+	i			   : UDINT;
+END_VAR
+
+//! @description This method is called cyclically by <c>CyclicLogic()</c>]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.SubModuleMonitor();
+IF NumberOfSubModules <> 0 THEN (* Update alarm severity from Submodules *)
+	FOR i := 1 TO NumberOfSubModules DO
+		IF ipSubModules[i].CurrentAlarmSeverity > _CurrentAlarmSeverity THEN
+			_CurrentAlarmSeverity := ipSubModules[i].CurrentAlarmSeverity;
+		END_IF
+	END_FOR
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Suspended" Id="{7d4b3fe7-b110-4664-8c24-8e01c5eb5aab}" FolderPath="WaitingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Suspended</b> state
+METHOD PROTECTED Suspended
+
+(*! <description> <b>The base implementation of this method is empty. User must override this method to provide functionality.</b>
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Suspending </td>
+		<td> State Complete <i>(Suspending)</i></td> 
+		<td> Unsuspend Command </td>
+		<td> Unsuspending </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE CurrentMode OF
+	E_PMLCustomMode.Production:
+		IF _CmdCommon.Start THEN
+			_CmdCommon.Start := FALSE;
+			ChangeState(State := E_PMLCommand.ePMLCommand_Unsuspend);
+		END_IF
+
+	E_PMLCustomMode.Home:
+		IF _StsCommon.Homed THEN
+			ChangeMode(Mode := E_PMLCustomMode.Production);
+		END_IF
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Suspending" Id="{dc5ebf07-3cc9-4ad0-a3d6-c3fb03301d56}" FolderPath="ActingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Suspending</b> state
+METHOD PROTECTED Suspending
+VAR
+	i				: UDINT;
+	SubModulesReady : BOOL := TRUE;
+END_VAR
+
+(*! <description><b>Note:</b> The <i>Suspend</i> command is intended to be initiated by automatic detection of upstream/downstream jams, etc. It is meant to be distinct from a <i>Hold</i> in that <i>Hold</i> should be commanded by an operator.  Both <i>Hold</i>and<i>Suspend</i> result in a <i>paused</i> state which should allow resumption of the <b>Execute</b> state. 
+<table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Execute </td>
+		<td> Suspend Command </td> 
+		<td> State Complete </td>
+		<td> Suspended </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Suspending();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Unsuspending" Id="{45bc5231-c24f-470e-b97e-a5472e07d128}" FolderPath="ActingStates\">
+      <Declaration><![CDATA[//! @summary This method contains code which will execute when this PackML module is in the <b>Unsuspending</b> state
+METHOD PROTECTED Unsuspending
+VAR
+	i				: UDINT;
+	SubModulesReady : BOOL := TRUE;
+END_VAR
+
+(*! <description><b></b><table> 
+	<tr>
+		<th> Previous State </th>
+		<th> Transition In </th>
+		<th> Transition Out </th>
+		<th> Next State  </th> 
+	</tr>
+	<tr>
+		<td> Suspended </td>
+		<td> Unsuspend Command </td> 
+		<td> State Complete </td>
+		<td> Execute </td> 
+	</tr>
+</table>
+This method is called as required by <c>StateControl()</c>
+</description> 
+
+*)]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Unsuspending();]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="CommonModule">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Aborted">
+      <LineId Id="112" Count="3" />
+      <LineId Id="47" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Aborting">
+      <LineId Id="910" Count="71" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Accept">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.CfgCommon.Get">
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Clearing">
+      <LineId Id="305" Count="29" />
+      <LineId Id="28" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.CmdCommon.Get">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Complete">
+      <LineId Id="23" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.ComponentMonitor">
+      <LineId Id="17" Count="6" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.CyclicLogic">
+      <LineId Id="62" Count="15" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="85" Count="4" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Execute">
+      <LineId Id="445" Count="29" />
+      <LineId Id="215" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Idle">
+      <LineId Id="676" Count="38" />
+      <LineId Id="51" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Initialize">
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.RcpCommon.Get">
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Resetting">
+      <LineId Id="119" Count="29" />
+      <LineId Id="28" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Starting">
+      <LineId Id="27" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Stopped">
+      <LineId Id="104" Count="3" />
+      <LineId Id="47" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Stopping">
+      <LineId Id="188" Count="38" />
+      <LineId Id="27" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.StsCommon.Get">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.SubModuleMonitor">
+      <LineId Id="17" Count="6" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Suspended">
+      <LineId Id="109" Count="10" />
+      <LineId Id="23" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Suspending">
+      <LineId Id="28" Count="0" />
+    </LineIds>
+    <LineIds Name="CommonModule.Unsuspending">
+      <LineId Id="27" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_ProcessCommand" Id="{2d3ded61-554a-4722-b0d2-e79f85704820}">
+    <Declaration><![CDATA[TYPE ST_ProcessCommand :
+	STRUCT
+		MoveToAbortPos : BOOL;
+	END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

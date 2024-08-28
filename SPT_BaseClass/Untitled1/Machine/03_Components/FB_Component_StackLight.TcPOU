@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Component_StackLight" Id="{8e6a68d9-ec5f-4e9e-9397-b655fbfcbab6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Component_StackLight EXTENDS CommonComponent
+VAR
+	
+	//Alarms
+	StackLightAlarm : ARRAY[1..ALARM_COUNT] OF FB_TcAlarm;
+END_VAR
+VAR CONSTANT
+	ALARM_COUNT : INT := 2;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Folder Name="I_CyclicLogic" Id="{862b1fc9-42ad-46ac-9ceb-878e0487f4b2}" />
+    <Folder Name="Methods" Id="{0fc28ec0-8429-4b35-8bac-0cb99bb21eae}" />
+    <Method Name="CreateEvents" Id="{bdc3d3db-74c0-4dca-be4f-acffc0b49b59}" FolderPath="Methods\">
+      <Declaration><![CDATA[//! @summary Initializes event function blocks using this components's name
+METHOD PROTECTED CreateEvents
+
+//! @description This method is called by <c>Initialize()</c> as required]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Add your event creation here
+(*F_CreateAllEventsInClass(Alarms		:= StackLightAlarm,
+						 ClassSize	:= SIZEOF(TC_EVENTS.FestoServo),
+						 pInitEvent := ADR(TC_EVENTS.FestoServo.InitReferenceEvent),
+						 Prefix		:= _Name);*)
+
+// Super call to base
+SUPER^.CreateEvents();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CyclicLogic" Id="{1f661eab-9097-4fa9-9de1-350f0eb8f69b}" FolderPath="I_CyclicLogic\">
+      <Declaration><![CDATA[//! @summary This method serves as the entry point for all underlying FB logic
+METHOD PUBLIC CyclicLogic
+
+//! @description This method should be called cyclically by descendant function blocks by invoking <c>SUPER^.CyclicLogic()</c>.  Alternatively, the contents of this method could be reimplemented entirely in which case a call to this method would not be necessary.]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.CyclicLogic();
+
+(* Update alarm severity from this component *)
+_CurrentAlarmSeverity := F_GetMaxSeverityRaised(Alarms := StackLightAlarm, CurrentSeverity := _CurrentAlarmSeverity);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Monitoring" Id="{0e03a01f-f3e2-4203-b30d-02f6694e7235}" FolderPath="I_CyclicLogic\">
+      <Declaration><![CDATA[//! Provides basic error detection and event handling for this component
+METHOD PROTECTED Monitoring
+
+(*! @descriptionThis method is called cyclically by <c>CyclicLogic()</c>*)
+VAR
+	i: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF _Error AND NOT StackLightAlarm[2].bRaised THEN
+	RaiseAlarm2Args(StackLightAlarm[2], CONCAT('Error ID: ', TO_STRING(_ErrorID)), '');
+END_IF
+
+_Busy	 := _Busy;
+_Error	 := _CurrentAlarmSeverity >= TcEventSeverity.Error;
+_ErrorID := _ErrorID;
+SUPER^.Monitoring();]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Component_StackLight">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Component_StackLight.CreateEvents">
+      <LineId Id="20" Count="6" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Component_StackLight.CyclicLogic">
+      <LineId Id="13" Count="2" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Component_StackLight.Monitoring">
+      <LineId Id="152" Count="6" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

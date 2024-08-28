@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_CollectOEE" Id="{cf5faca9-5063-4aae-8bf6-d31faf05bca4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CollectOEE IMPLEMENTS I_VisitModules
+VAR
+    _PackTags : ST_PackMLv30Ext;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="UpdateModeTimers" Id="{7cb1f824-a369-47d2-b77a-03aae7321075}">
+      <Declaration><![CDATA[METHOD UpdateModeTimers
+VAR
+	currentTime : T_DCTIME64;
+END_VAR
+
+VAR_INST
+	lastTime	 : T_DCTIME64 := F_GetActualDcTime64();
+	lastState	 : DINT;
+	lastMode	 : DINT;
+	timeDiff	 : LREAL;
+	timeToUpdate : LREAL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF _PackTags.Status.StateCurrent <> lastState THEN
+    MEMSET(ADR(_PackTags.Admin.StateCurrentTime), 0, SIZEOF(_PackTags.Admin.StateCurrentTime));
+    lastState := _PackTags.Status.StateCurrent;
+END_IF
+
+IF _PackTags.Status.UnitModeCurrent <> lastMode THEN
+    MEMSET(ADR(_PackTags.Admin.ModeCurrentTime), 0, SIZEOF(_PackTags.Admin.ModeCurrentTime));
+    lastMode := _PackTags.Status.UnitModeCurrent;
+END_IF
+
+currentTime := F_GetActualDcTime64();
+IF lastTime <> 0 THEN
+	//timeToUpdate := ULINT_TO_LREAL(currentTime - lastTime)/1_000_000;
+    timeToUpdate := ULINT_TO_LREAL(currentTime - lastTime) / 1_000_000_000.0;
+END_IF
+
+// only seconds get added to the cumulative timers 
+IF timeToUpdate > 1 THEN
+    _PackTags.Admin.ModeCummulativeTime[_PackTags.Status.UnitModeCurrent] := _PackTags.Admin.ModeCummulativeTime[_PackTags.Status.UnitModeCurrent] + LREAL_TO_DINT(timeToUpdate);
+    _PackTags.Admin.ModeCurrentTime[_PackTags.Status.UnitModeCurrent]     := _PackTags.Admin.ModeCurrentTime[_PackTags.Status.UnitModeCurrent] + LREAL_TO_DINT(timeToUpdate);
+    _PackTags.Admin.StateCummulativeTime[_PackTags.Status.UnitModeCurrent, _PackTags.Status.StateCurrent]
+        := _PackTags.Admin.StateCummulativeTime[_PackTags.Status.UnitModeCurrent, _PackTags.Status.StateCurrent] + LREAL_TO_DINT(timeToUpdate);
+
+    _PackTags.Admin.StateCurrentTime[_PackTags.Status.UnitModeCurrent, _PackTags.Status.StateCurrent] :=
+        _PackTags.Admin.StateCurrentTime[_PackTags.Status.UnitModeCurrent, _PackTags.Status.StateCurrent] + LREAL_TO_DINT(timeToUpdate);
+
+    lastTime := currentTime;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="VisitModule" Id="{a7833e81-32c6-458e-9879-d004a26cc954}">
+      <Declaration><![CDATA[METHOD VisitModule : BOOL
+VAR_INPUT
+	Module	: I_CommonModule;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_PackTags.Status.StateCurrent	 := Module.CurrentState;
+_PackTags.Status.UnitModeCurrent := Module.CurrentMode;
+UpdateModeTimers();]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CollectOEE">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CollectOEE.UpdateModeTimers">
+      <LineId Id="206" Count="11" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="218" Count="13" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CollectOEE.VisitModule">
+      <LineId Id="29" Count="1" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
